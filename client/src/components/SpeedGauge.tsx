@@ -91,7 +91,7 @@ export function SpeedGauge({
         </motion.g>
       </svg>
 
-      <div className="absolute bottom-2 flex flex-col items-center">
+      <div className="absolute bottom-[-10px] flex flex-col items-center">
         <motion.span 
           key={label}
           initial={{ opacity: 0, y: 10 }}
