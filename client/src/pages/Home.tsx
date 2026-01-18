@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export default function Home() {
   const { status, stats, startTest, cancelTest } = useSpeedTest();
+  const currentYear = new Date().getFullYear();
 
   // Determine which gauge to show as "active" based on test phase
   const showDownload = status === 'downloading' || status === 'complete' || (status === 'idle' && stats.download > 0);
@@ -189,6 +190,25 @@ export default function Home() {
             <HistoryTable />
           </div>
         </section>
+
+        {/* Footer Credit */}
+        <footer className="pt-20 pb-10 flex flex-col items-center justify-center space-y-6">
+          <div className="h-px w-full max-w-xs bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+          
+          <button className="group relative px-8 py-3 rounded-full bg-black/40 border border-white/10 backdrop-blur-md overflow-hidden transition-all duration-500 hover:scale-110 active:scale-95">
+            {/* RGB Animated Border/Glow */}
+            <div className="absolute inset-0 opacity-20 group-hover:opacity-100 transition-opacity duration-500 animate-[spin_4s_linear_infinite] bg-[conic-gradient(from_0deg,#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000)] blur-xl" />
+            <div className="absolute inset-[1px] rounded-full bg-black/80 backdrop-blur-md z-10" />
+            
+            <span className="relative z-20 font-display font-black text-xs tracking-[0.3em] uppercase bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-green-500 to-blue-500 animate-gradient-x">
+              MAHISAGARSOFT
+            </span>
+          </button>
+          
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">
+            COPY all right reserved &copy; {currentYear} MAHISAGARSOFT
+          </p>
+        </footer>
       </main>
     </div>
   );

@@ -65,6 +65,17 @@
     @apply bg-card/40 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)];
   }
 
+  .animate-gradient-x {
+    background-size: 200% 200%;
+    animation: gradient-x 3s ease infinite;
+  }
+
+  @keyframes gradient-x {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
   .glossy-button {
     @apply relative overflow-hidden transition-all duration-300;
     background: linear-gradient(135deg, hsla(var(--primary), 0.2), hsla(var(--secondary), 0.2));
