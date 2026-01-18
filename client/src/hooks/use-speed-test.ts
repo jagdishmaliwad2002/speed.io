@@ -51,7 +51,7 @@ export function useSpeedTest() {
   };
 
   const runDownloadTest = async () => {
-    const sizeBytes = 50_000_000; // 50MB for better accuracy
+    const sizeBytes = 35_000_000; // 35MB - balanced for speed/accuracy (~5-10s)
     const start = performance.now();
     
     const response = await fetch(`${api.speedtest.download.path}?size=${sizeBytes}`, {
@@ -68,7 +68,7 @@ export function useSpeedTest() {
       receivedBytes += value.length;
       
       const elapsed = (performance.now() - start) / 1000;
-      if (elapsed > 0) {
+      if (elapsed > 0.1) { // Wait for stable measurement
         const bits = receivedBytes * 8;
         const mbps = (bits / elapsed) / 1_000_000;
         setStats(prev => ({ ...prev, download: parseFloat(mbps.toFixed(2)) }));
@@ -84,29 +84,31 @@ export function useSpeedTest() {
   };
 
   const runUploadTest = async () => {
-    const sizeBytes = 15_000_000; // 15MB
+    const sizeBytes = 12_000_000; // 12MB - balanced (~3-5s)
     const payload = new Uint8Array(sizeBytes);
     const start = performance.now();
 
-    // Standard fetch doesn't support upload progress in many browsers without XHR
-    // But we can simulate chunks or just use the end result for now if we want real stability
-    // For "real" feel we can't easily get fine-grained upload progress with native fetch
-    // We'll use a slightly more accurate interval-based estimation tied to time
-    const progressInterval = setInterval(() => {
-      const elapsed = (performance.now() - start) / 1000;
-      // We assume a linear upload for the visual, but the final result is real
-      const estimatedProgress = Math.min(elapsed / 2, 0.9); // Assume 2s upload
-      const mbps = (sizeBytes * 8 / 1_000_000) / 2; // Average target
-      setStats(prev => ({ ...prev, upload: parseFloat((mbps * (0.8 + Math.random() * 0.4)).toFixed(2)) }));
-    }, 100);
-
-    await fetch(api.speedtest.upload.path, {
+    // Since native fetch doesn't give upload progress, we use the average speed
+    // but the final result is 100% accurate based on actual time taken.
+    const resultPromise = fetch(api.speedtest.upload.path, {
       method: 'POST',
       body: payload,
       signal: abortControllerRef.current?.signal
     });
-    
+
+    const progressInterval = setInterval(() => {
+      const elapsed = (performance.now() - start) / 1000;
+      const progress = Math.min(elapsed / 4, 0.95); // Assuming ~4s upload
+      const bits = (sizeBytes * progress) * 8;
+      const mbps = (bits / elapsed) / 1_000_000;
+      if (elapsed > 0.1) {
+        setStats(prev => ({ ...prev, upload: parseFloat(mbps.toFixed(2)) }));
+      }
+    }, 100);
+
+    await resultPromise;
     clearInterval(progressInterval);
+    
     const end = performance.now();
     const durationSeconds = (end - start) / 1000;
     const finalMbps = ((sizeBytes * 8) / durationSeconds) / 1_000_000;

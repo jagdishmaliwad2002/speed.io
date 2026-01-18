@@ -103,7 +103,7 @@ export function SpeedGauge({
         <motion.g
           style={{ originX: "150px", originY: "150px" }}
           animate={{ rotate: (percentage * 180) - 90 }}
-          transition={{ type: "spring", damping: 20, stiffness: 60 }}
+          transition={{ type: "spring", damping: 15, stiffness: 120, mass: 0.5 }}
         >
           <line
             x1="150" y1="150"
