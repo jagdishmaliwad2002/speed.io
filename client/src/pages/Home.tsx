@@ -79,7 +79,7 @@ export default function Home() {
               />
               
               {/* Start Button */}
-              <div className="mt-[20px] relative z-20">
+              <div className="mt-[60px] relative z-20">
                 {status === 'idle' || status === 'complete' || status === 'error' ? (
                   <button
                     onClick={startTest}

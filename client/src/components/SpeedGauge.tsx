@@ -58,6 +58,33 @@ export function SpeedGauge({
           strokeLinecap="round"
         />
 
+        {/* Speed Markers (Spokes) */}
+        {[0, 10, 20, 30, 40, 50, 100].map((val) => {
+          const p = Math.min(val / max, 1);
+          const angle = (p * 180) - 180;
+          const rad = (angle * Math.PI) / 180;
+          const x1 = 150 + Math.cos(rad) * 120;
+          const y1 = 150 + Math.sin(rad) * 120;
+          const x2 = 150 + Math.cos(rad) * 130;
+          const y2 = 150 + Math.sin(rad) * 130;
+          const tx = 150 + Math.cos(rad) * 145;
+          const ty = 150 + Math.sin(rad) * 145;
+          
+          return (
+            <g key={val}>
+              <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="currentColor" strokeWidth="1" className="text-white/20" />
+              <text 
+                x={tx} y={ty} 
+                textAnchor="middle" 
+                alignmentBaseline="middle" 
+                className="fill-white/30 text-[8px] font-black"
+              >
+                {val}
+              </text>
+            </g>
+          );
+        })}
+
         {/* Active Progress - Neon Glowing Path */}
         <motion.path
           d="M 30 150 A 120 120 0 0 1 270 150"
@@ -91,7 +118,7 @@ export function SpeedGauge({
         </motion.g>
       </svg>
 
-      <div className="absolute bottom-[-10px] flex flex-col items-center">
+      <div className="absolute bottom-[-40px] flex flex-col items-center">
         <motion.span 
           key={label}
           initial={{ opacity: 0, y: 10 }}
