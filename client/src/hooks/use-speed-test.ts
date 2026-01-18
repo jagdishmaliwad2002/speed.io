@@ -65,7 +65,9 @@ export function useSpeedTest() {
         signal: abortController.signal
       });
       
+      if (!response.ok) throw new Error("Download request failed");
       if (!response.body) throw new Error("No response body");
+      
       const reader = response.body.getReader();
       
       while(true) {
@@ -80,17 +82,23 @@ export function useSpeedTest() {
           setStats(prev => ({ ...prev, download: parseFloat(mbps.toFixed(2)) }));
         }
         
-        if (performance.now() - start > timeoutMs) break;
+        if (performance.now() - start > timeoutMs) {
+          await reader.cancel();
+          break;
+        }
       }
-    } catch (e) {
-      console.log("Download phase ended or timed out");
+    } catch (e: any) {
+      if (e.name === 'AbortError') {
+        console.log("Download phase timed out as expected");
+      } else {
+        console.error("Download error:", e);
+      }
     } finally {
       clearTimeout(timeoutId);
     }
     
     const end = performance.now();
     const durationSeconds = (end - start) / 1000;
-    // Recalculate based on actual received data
     const finalMbps = (receivedBytes > 0) ? ((receivedBytes * 8) / durationSeconds) / 1_000_000 : 0;
     
     setStats(prev => ({ ...prev, download: parseFloat(finalMbps.toFixed(2)), progress: 50 }));
