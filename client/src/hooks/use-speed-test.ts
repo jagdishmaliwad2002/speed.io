@@ -51,67 +51,81 @@ export function useSpeedTest() {
   };
 
   const runDownloadTest = async () => {
-    const sizeBytes = 35_000_000; // 35MB - balanced for speed/accuracy (~5-10s)
+    // Target 20 seconds for download
+    const timeoutMs = 20000;
+    const sizeBytes = 100_000_000; // 100MB max
     const start = performance.now();
     
-    const response = await fetch(`${api.speedtest.download.path}?size=${sizeBytes}`, {
-      signal: abortControllerRef.current?.signal
-    });
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), timeoutMs);
     
-    if (!response.body) throw new Error("No response body");
-    const reader = response.body.getReader();
-    let receivedBytes = 0;
-    
-    while(true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      receivedBytes += value.length;
+    try {
+      const response = await fetch(`${api.speedtest.download.path}?size=${sizeBytes}`, {
+        signal: abortController.current?.signal || abortController.signal
+      });
       
-      const elapsed = (performance.now() - start) / 1000;
-      if (elapsed > 0.1) { // Wait for stable measurement
-        const bits = receivedBytes * 8;
-        const mbps = (bits / elapsed) / 1_000_000;
-        setStats(prev => ({ ...prev, download: parseFloat(mbps.toFixed(2)) }));
+      if (!response.body) throw new Error("No response body");
+      const reader = response.body.getReader();
+      let receivedBytes = 0;
+      
+      while(true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        receivedBytes += value.length;
+        
+        const elapsed = (performance.now() - start) / 1000;
+        if (elapsed > 0.1) {
+          const bits = receivedBytes * 8;
+          const mbps = (bits / elapsed) / 1_000_000;
+          setStats(prev => ({ ...prev, download: parseFloat(mbps.toFixed(2)) }));
+        }
+        
+        if (performance.now() - start > timeoutMs) break;
+      }
+    } catch (e) {
+      console.log("Download phase ended or timed out");
+    } finally {
+      clearTimeout(timeoutId);
+    }
+    
+    const end = performance.now();
+    const durationSeconds = (end - start) / 1000;
+    // Recalculate based on actual received data
+    const finalMbps = (receivedBytes > 0) ? ((receivedBytes * 8) / durationSeconds) / 1_000_000 : 0;
+    
+    setStats(prev => ({ ...prev, download: parseFloat(finalMbps.toFixed(2)), progress: 50 }));
+    return finalMbps;
+  };
+
+  const runUploadTest = async () => {
+    // Target 20 seconds for upload
+    const timeoutMs = 20000;
+    const chunkSize = 1_000_000; // 1MB chunks
+    const start = performance.now();
+    let totalUploadedBytes = 0;
+    
+    const payload = new Uint8Array(chunkSize);
+    
+    while (performance.now() - start < timeoutMs) {
+      try {
+        await fetch(api.speedtest.upload.path, {
+          method: 'POST',
+          body: payload,
+          signal: abortControllerRef.current?.signal
+        });
+        totalUploadedBytes += chunkSize;
+        
+        const elapsed = (performance.now() - start) / 1000;
+        const mbps = ((totalUploadedBytes * 8) / elapsed) / 1_000_000;
+        setStats(prev => ({ ...prev, upload: parseFloat(mbps.toFixed(2)) }));
+      } catch (e) {
+        break;
       }
     }
     
     const end = performance.now();
     const durationSeconds = (end - start) / 1000;
-    const finalMbps = ((receivedBytes * 8) / durationSeconds) / 1_000_000;
-    
-    setStats(prev => ({ ...prev, download: parseFloat(finalMbps.toFixed(2)), progress: 60 }));
-    return finalMbps;
-  };
-
-  const runUploadTest = async () => {
-    const sizeBytes = 12_000_000; // 12MB - balanced (~3-5s)
-    const payload = new Uint8Array(sizeBytes);
-    const start = performance.now();
-
-    // Since native fetch doesn't give upload progress, we use the average speed
-    // but the final result is 100% accurate based on actual time taken.
-    const resultPromise = fetch(api.speedtest.upload.path, {
-      method: 'POST',
-      body: payload,
-      signal: abortControllerRef.current?.signal
-    });
-
-    const progressInterval = setInterval(() => {
-      const elapsed = (performance.now() - start) / 1000;
-      const progress = Math.min(elapsed / 4, 0.95); // Assuming ~4s upload
-      const bits = (sizeBytes * progress) * 8;
-      const mbps = (bits / elapsed) / 1_000_000;
-      if (elapsed > 0.1) {
-        setStats(prev => ({ ...prev, upload: parseFloat(mbps.toFixed(2)) }));
-      }
-    }, 100);
-
-    await resultPromise;
-    clearInterval(progressInterval);
-    
-    const end = performance.now();
-    const durationSeconds = (end - start) / 1000;
-    const finalMbps = ((sizeBytes * 8) / durationSeconds) / 1_000_000;
+    const finalMbps = ((totalUploadedBytes * 8) / durationSeconds) / 1_000_000;
     
     setStats(prev => ({ ...prev, upload: parseFloat(finalMbps.toFixed(2)), progress: 100 }));
     return finalMbps;
