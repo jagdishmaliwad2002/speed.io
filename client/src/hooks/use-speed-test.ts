@@ -51,9 +51,9 @@ export function useSpeedTest() {
   };
 
   const runDownloadTest = async () => {
-    // Target 20 seconds for download
-    const timeoutMs = 20000;
-    const sizeBytes = 100_000_000; // 100MB max
+    // Target 15 seconds for download
+    const timeoutMs = 15000;
+    const chunkSize = 1_000_000; // 1MB chunks
     const start = performance.now();
     let receivedBytes = 0;
     
@@ -61,38 +61,23 @@ export function useSpeedTest() {
     const timeoutId = setTimeout(() => abortController.abort(), timeoutMs);
     
     try {
-      const response = await fetch(`${api.speedtest.download.path}?size=${sizeBytes}`, {
-        signal: abortController.signal
-      });
-      
-      if (!response.ok) throw new Error("Download request failed");
-      if (!response.body) throw new Error("No response body");
-      
-      const reader = response.body.getReader();
-      
-      while(true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        receivedBytes += value.length;
+      // Use repeated small fetches to ensure stability and real-time updates
+      while (performance.now() - start < timeoutMs) {
+        const response = await fetch(`${api.speedtest.download.path}?size=${chunkSize}&t=${Date.now()}`, {
+          signal: abortController.signal,
+          cache: 'no-store'
+        });
+        
+        if (!response.ok) break;
+        const blob = await response.blob();
+        receivedBytes += blob.size;
         
         const elapsed = (performance.now() - start) / 1000;
-        if (elapsed > 0.1) {
-          const bits = receivedBytes * 8;
-          const mbps = (bits / elapsed) / 1_000_000;
-          setStats(prev => ({ ...prev, download: parseFloat(mbps.toFixed(2)) }));
-        }
-        
-        if (performance.now() - start > timeoutMs) {
-          await reader.cancel();
-          break;
-        }
+        const mbps = ((receivedBytes * 8) / elapsed) / 1_000_000;
+        setStats(prev => ({ ...prev, download: parseFloat(mbps.toFixed(2)) }));
       }
     } catch (e: any) {
-      if (e.name === 'AbortError') {
-        console.log("Download phase timed out as expected");
-      } else {
-        console.error("Download error:", e);
-      }
+      console.log("Download phase ended");
     } finally {
       clearTimeout(timeoutId);
     }
