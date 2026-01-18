@@ -62,6 +62,22 @@
   }
 
   .glass-panel {
-    @apply bg-card/60 backdrop-blur-xl border border-white/5;
+    @apply bg-card/40 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)];
+  }
+
+  .glossy-button {
+    @apply relative overflow-hidden transition-all duration-300;
+    background: linear-gradient(135deg, hsla(var(--primary), 0.2), hsla(var(--secondary), 0.2));
+    border: 1px solid hsla(var(--primary), 0.3);
+  }
+
+  .glossy-button::before {
+    content: "";
+    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
+    background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+  }
+
+  .glossy-button:hover::before {
+    @apply opacity-100;
   }
 }
