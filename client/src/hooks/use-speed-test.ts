@@ -55,18 +55,18 @@ export function useSpeedTest() {
     const timeoutMs = 20000;
     const sizeBytes = 100_000_000; // 100MB max
     const start = performance.now();
+    let receivedBytes = 0;
     
     const abortController = new AbortController();
     const timeoutId = setTimeout(() => abortController.abort(), timeoutMs);
     
     try {
       const response = await fetch(`${api.speedtest.download.path}?size=${sizeBytes}`, {
-        signal: abortController.current?.signal || abortController.signal
+        signal: abortController.signal
       });
       
       if (!response.body) throw new Error("No response body");
       const reader = response.body.getReader();
-      let receivedBytes = 0;
       
       while(true) {
         const { done, value } = await reader.read();
