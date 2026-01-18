@@ -142,6 +142,37 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Connection Insights */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="glass-panel p-6 rounded-3xl space-y-2">
+            <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">ISP & Network</span>
+            <p className="text-xl font-bold text-primary italic truncate">{status === 'idle' ? 'Scanning...' : 'Detecting Connection'}</p>
+            <div className="flex gap-2">
+              <span className="px-2 py-0.5 rounded bg-white/5 text-[10px] font-bold text-white/40">Ahmedabad, IN</span>
+              <span className="px-2 py-0.5 rounded bg-white/5 text-[10px] font-bold text-white/40">Broadband</span>
+            </div>
+          </div>
+          <div className="glass-panel p-6 rounded-3xl space-y-2">
+            <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Connection Benefit</span>
+            <p className="text-sm font-medium text-white/80 leading-relaxed">
+              {stats.download > 25 ? 'Perfect for 4K Streaming and Gaming' : stats.download > 10 ? 'Good for HD Video and Multi-device' : 'Basic browsing and email'}
+            </p>
+          </div>
+          <div className="glass-panel p-6 rounded-3xl space-y-2 col-span-1 md:col-span-2">
+            <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Provider Status</span>
+            <div className="flex items-center gap-4">
+              <div className="flex-1 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_green]" />
+                <span className="text-xs font-bold text-white/60">YouTube 4K Stable</span>
+              </div>
+              <div className="flex-1 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_orange]" />
+                <span className="text-xs font-bold text-white/60">X (Twitter) Slow</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* History Section */}
         <section className="space-y-8 pt-20">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

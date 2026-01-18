@@ -9,6 +9,10 @@ export const testResults = pgTable("test_results", {
   ping: integer("ping").notNull(),                 // in ms
   jitter: integer("jitter").notNull(),             // in ms
   ipAddress: text("ip_address"),
+  isp: text("isp"),
+  city: text("city"),
+  country: text("country"),
+  connectionType: text("connection_type"), // mobile, wifi, etc
   createdAt: timestamp("created_at").defaultNow(),
 });
 
