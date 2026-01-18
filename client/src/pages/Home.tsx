@@ -206,7 +206,7 @@ export default function Home() {
           </button>
           
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">
-            COPY all right reserved &copy; {currentYear} MAHISAGARSOFT
+            MAHISAGARSOFT &copy; {currentYear} ALL RIGHT RESERVED
           </p>
         </footer>
       </main>

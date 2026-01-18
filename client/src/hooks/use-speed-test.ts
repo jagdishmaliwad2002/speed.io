@@ -56,10 +56,13 @@ export function useSpeedTest() {
     
     // Simulate real-time gauge movement during download
     const progressInterval = setInterval(() => {
-      const elapsed = (performance.now() - start) / 1000;
-      // Estimate speed based on progress (dummy but visual)
-      const estimatedSpeed = 20 + Math.random() * 30; 
-      setStats(prev => ({ ...prev, download: parseFloat(estimatedSpeed.toFixed(2)) }));
+      // Start from 0 and move towards a target speed
+      setStats(prev => {
+        const target = 25 + Math.random() * 20;
+        const current = prev.download;
+        const next = current + (target - current) * 0.1; // Smooth transition
+        return { ...prev, download: parseFloat(next.toFixed(2)) };
+      });
     }, 100);
 
     const response = await fetch(`${api.speedtest.download.path}?size=${sizeBytes}`, {
@@ -84,8 +87,12 @@ export function useSpeedTest() {
     const start = performance.now();
     
     const progressInterval = setInterval(() => {
-      const estimatedSpeed = 5 + Math.random() * 10;
-      setStats(prev => ({ ...prev, upload: parseFloat(estimatedSpeed.toFixed(2)) }));
+      setStats(prev => {
+        const target = 8 + Math.random() * 5;
+        const current = prev.upload;
+        const next = current + (target - current) * 0.1;
+        return { ...prev, upload: parseFloat(next.toFixed(2)) };
+      });
     }, 100);
 
     await fetch(api.speedtest.upload.path, {
@@ -112,9 +119,24 @@ export function useSpeedTest() {
     abortControllerRef.current = new AbortController();
 
     try {
-      // Fetch IP info first
-      const ipRes = await fetch('http://ip-api.com/json/');
-      const ipInfo = await ipRes.json();
+      // Fetch IP info first - use HTTPS for browser safety if possible, or fallback to relative/server proxy
+      // ip-api.com free tier is HTTP only. Let's try to handle it or use a more robust approach.
+      let ipInfo = { query: '0.0.0.0', isp: 'Unknown ISP', city: 'Unknown', country: 'Unknown', mobile: false };
+      try {
+        const ipRes = await fetch('https://ipapi.co/json/');
+        if (ipRes.ok) {
+          const data = await ipRes.json();
+          ipInfo = {
+            query: data.ip,
+            isp: data.org,
+            city: data.city,
+            country: data.country_name,
+            mobile: false // ipapi.co doesn't provide this in free basic, we'll assume broadband
+          };
+        }
+      } catch (e) {
+        console.warn("Geo info fetch failed, using fallbacks", e);
+      }
 
       const { ping, jitter } = await runPingTest();
       
